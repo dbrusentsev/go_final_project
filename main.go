@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"go_final_project/pkg/api"
 	"go_final_project/pkg/db"
 )
 
@@ -22,6 +23,7 @@ func main() {
 	}
 	defer db.DB.Close()
 
+	api.Init()
 
 	http.Handle("/", http.FileServer(http.Dir("web")))
 
