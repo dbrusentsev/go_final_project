@@ -1,5 +1,7 @@
 package db
 
+import "fmt"
+
 type Task struct {
 	ID      string `json:"id"`
 	Date    string `json:"date"`
@@ -16,4 +18,43 @@ func AddTask(task *Task) (int64, error) {
 		id, err = res.LastInsertId()
 	}
 	return id, err
+}
+
+func Tasks(limit int) ([]*Task, error) {
+	var tasks []*Task = []*Task{}
+
+	rows, err := DB.Query("SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date LIMIT ?", limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			id      int64
+			date    string
+			title   string
+			comment string
+			repeat  string
+		)
+
+		err := rows.Scan(&id, &date, &title, &comment, &repeat)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, &Task{
+			ID:      fmt.Sprintf("%d", id),
+			Date:    date,
+			Title:   title,
+			Comment: comment,
+			Repeat:  repeat,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
 }
