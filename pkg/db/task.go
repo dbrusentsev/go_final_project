@@ -20,6 +20,19 @@ func AddTask(task *Task) (int64, error) {
 	return id, err
 }
 
+func GetTask(id string) (*Task, error) {
+	task := Task{}
+	row := DB.QueryRow("SELECT id, date, title, comment, repeat FROM scheduler WHERE id = ?", id)
+	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+	return &task, err
+}
+
+func UpdateTask(task *Task) error {
+	query := `UPDATE scheduler SET date = ?, title = ?, comment = ?, repeat = ? WHERE id = ?`
+	_, err := DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
+	return err
+}
+
 func Tasks(limit int) ([]*Task, error) {
 	var tasks []*Task = []*Task{}
 
