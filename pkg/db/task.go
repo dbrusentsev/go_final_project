@@ -33,6 +33,11 @@ func UpdateTask(task *Task) error {
 	return err
 }
 
+func DeleteTask(id string) error {
+	_, err := DB.Exec("DELETE FROM scheduler WHERE id = ?", id)
+	return err
+}
+
 func Tasks(limit int) ([]*Task, error) {
 	var tasks []*Task = []*Task{}
 

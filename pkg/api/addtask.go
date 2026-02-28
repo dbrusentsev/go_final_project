@@ -17,6 +17,8 @@ func taskHandler(w http.ResponseWriter, r *http.Request) {
 		addTaskHandler(w, r)
 	case http.MethodPut:
 		updateTaskHandler(w, r)
+	case http.MethodDelete:
+		deleteTaskHandler(w, r)
 	}
 }
 
@@ -114,6 +116,12 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = db.GetTask(task.ID)
+	if err != nil {
+		writeJSON(w, map[string]string{"error": "Задача не найдена"})
+		return
+	}
+
 	if task.Title == "" {
 		writeJSON(w, map[string]string{"error": "не указан заголовок задачи"})
 		return
@@ -160,4 +168,63 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 func writeJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(data)
+}
+
+func doneHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		writeJSON(w, map[string]string{"error": "Не указан идентификатор"})
+		return
+	}
+
+	task, err := db.GetTask(id)
+	if err != nil {
+		writeJSON(w, map[string]string{"error": "Задача не найдена"})
+		return
+	}
+
+	if task.Repeat == "" {
+		err = db.DeleteTask(id)
+		if err != nil {
+			writeJSON(w, map[string]string{"error": err.Error()})
+			return
+		}
+	} else {
+		now := time.Now()
+		next, err := NextDate(now, task.Date, task.Repeat)
+		if err != nil {
+			writeJSON(w, map[string]string{"error": err.Error()})
+			return
+		}
+		task.Date = next
+		err = db.UpdateTask(task)
+		if err != nil {
+			writeJSON(w, map[string]string{"error": err.Error()})
+			return
+		}
+	}
+
+	writeJSON(w, map[string]interface{}{})
+}
+
+func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		writeJSON(w, map[string]string{"error": "Не указан идентификатор"})
+		return
+	}
+
+	_, err := db.GetTask(id)
+	if err != nil {
+		writeJSON(w, map[string]string{"error": "Задача не найдена"})
+		return
+	}
+
+	err = db.DeleteTask(id)
+	if err != nil {
+		writeJSON(w, map[string]string{"error": err.Error()})
+		return
+	}
+
+	writeJSON(w, map[string]interface{}{})
 }
