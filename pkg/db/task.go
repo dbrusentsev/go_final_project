@@ -58,7 +58,7 @@ func Tasks(limit int) ([]*Task, error) {
 
 		err := rows.Scan(&id, &date, &title, &comment, &repeat)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error while scanning row: %w", err)
 		}
 
 		tasks = append(tasks, &Task{

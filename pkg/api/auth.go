@@ -25,26 +25,26 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		writeJSON(w, map[string]string{"error": "ошибка чтения запроса"})
+		writeJSON(w, map[string]string{"error": "ошибка чтения запроса"}, http.StatusBadRequest)
 		return
 	}
 
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		writeJSON(w, map[string]string{"error": "ошибка десериализации JSON"})
+		writeJSON(w, map[string]string{"error": "ошибка десериализации JSON"}, http.StatusBadRequest)
 		return
 	}
 
 	// получаем пароль из переменной окружения
 	pass := os.Getenv("TODO_PASSWORD")
 	if pass == "" {
-		writeJSON(w, map[string]string{"error": "авторизация не требуется"})
+		writeJSON(w, map[string]string{"error": "авторизация не требуется"}, http.StatusBadRequest)
 		return
 	}
 
 	// проверяем пароль
 	if req.Password != pass {
-		writeJSON(w, map[string]string{"error": "Неверный пароль"})
+		writeJSON(w, map[string]string{"error": "Неверный пароль"}, http.StatusUnauthorized)
 		return
 	}
 
@@ -60,11 +60,11 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 	// подписываем токен
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		writeJSON(w, map[string]string{"error": "ошибка создания токена"})
+		writeJSON(w, map[string]string{"error": "ошибка создания токена"}, http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, map[string]string{"token": tokenString})
+	writeJSON(w, map[string]string{"token": tokenString}, http.StatusOK)
 }
 
 // auth - middleware для проверки аутентификации
